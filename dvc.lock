@@ -1,0 +1,85 @@
+schema: '2.0'
+stages:
+  download_dataset_from_kaggle:
+    cmd: python3 src/data/dataset_downloader.py --external-dataset-dir data/external/lacmus
+      --dataset-name mersico/lacmus-drone-dataset-ladd-v40
+    deps:
+    - path: src/data/dataset_downloader.py
+      hash: md5
+      md5: f1b7bf05fca3f3376a28b4f500720bce
+      size: 756
+    outs:
+    - path: data/external/lacmus
+      hash: md5
+      md5: 361037e0496ae331b53a2fc72d4d0c57.dir
+      size: 8481036678
+      nfiles: 4095
+  split_dataset_on_subsets:
+    cmd: python3 src/data/dataset_splitter.py --dataset-path data/external/lacmus
+      --output-dataset-path data/processed/lacmus
+    deps:
+    - path: data/external/lacmus
+      hash: md5
+      md5: 361037e0496ae331b53a2fc72d4d0c57.dir
+      size: 8481036678
+      nfiles: 4095
+    - path: src/data/dataset_splitter.py
+      hash: md5
+      md5: ccdf545e6aca4c6232b9ad688e1e681b
+      size: 1919
+    outs:
+    - path: data/processed/lacmus
+      hash: md5
+      md5: fedce718c453c5fc48044ea6d995e3b4.dir
+      size: 8479290895
+      nfiles: 2730
+  preprocess_dataset:
+    cmd: python3 src/data/dataset_preprocessor.py --dataset-path data/external/lacmus
+      --output-dataset-path data/processed/lacmus
+    deps:
+    - path: data/external/lacmus
+      hash: md5
+      md5: 361037e0496ae331b53a2fc72d4d0c57.dir
+      size: 8481036678
+      nfiles: 4095
+    - path: src/data/dataset_preprocessor.py
+      hash: md5
+      md5: 05b6d07b20e6e186ec38dc5753e2112a
+      size: 2538
+    outs:
+    - path: data/processed/lacmus
+      hash: md5
+      md5: 4569d0406f3ffcb09030632f5e9420fc.dir
+      size: 8479291144
+      nfiles: 2731
+  train_model:
+    cmd: python3 submodules/yolov5/src/train.py --img 1280 --batch 2 --epochs 15 --data
+      data/processed/lacmus/dataset.yaml --weights yolov5s.pt --seed 42 --project
+      lacmus
+    deps:
+    - path: data/processed/lacmus/dataset.yaml
+      hash: md5
+      md5: 49ecf54375f5018b81176b84016e6183
+      size: 249
+    - path: submodules/yolov5/src/train.py
+      hash: md5
+      md5: 136a49f749f4bf1e1bcde7001c0e8ef7
+      size: 33959
+    outs:
+    - path: lacmus
+      hash: md5
+      md5: 9c71dc3d59d107399c7b809958e8ba9d.dir
+      size: 34581297
+      nfiles: 22
+  validate_model:
+    cmd: python3 submodules/yolov5/src/val.py --weights lacmus/exp/weights/best.pt
+      --data data/processed/lacmus/dataset.yaml --imgsz 1280 --batch 4
+    deps:
+    - path: lacmus/exp/weights/best.pt
+      hash: md5
+      md5: d0379f19290e1dd2f6c058ea4d8421fa
+      size: 14862184
+    - path: submodules/yolov5/src/val.py
+      hash: md5
+      md5: dfcb11f9a2808f99f7de88d33d360341
+      size: 20586
