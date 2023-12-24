@@ -1,10 +1,10 @@
 stages:
-#  download_dataset_from_kaggle:
-#    cmd: python3 src/data/dataset_downloader.py --external-dataset-dir data/external/lacmus --dataset-name mersico/lacmus-drone-dataset-ladd-v40
-#    deps:
-#      - src/data/dataset_downloader.py
-#    outs:
-#      - data/external/lacmus
+  download_dataset_from_kaggle:
+    cmd: python3 src/data/dataset_downloader.py --external-dataset-dir data/external/lacmus --dataset-name mersico/lacmus-drone-dataset-ladd-v40
+    deps:
+      - src/data/dataset_downloader.py
+    outs:
+      - data/external/lacmus
 
   preprocess_dataset:
     cmd: python3 src/data/dataset_preprocessor.py --dataset-path data/external/lacmus --output-dataset-path data/processed/lacmus
@@ -15,7 +15,9 @@ stages:
       - data/processed/lacmus
 
   train_model:
-    cmd: python3 submodules/yolov5/src/train.py --img 1280 --batch 8 --epochs 1 --data data/processed/lacmus/dataset.yaml --weights yolov5s.pt --seed 42
+    cmd: python3 submodules/yolov5/src/train.py --img 1280 --batch 2 --epochs 15 --data data/processed/lacmus/dataset.yaml --weights yolov5s.pt --seed 42 --project lacmus
     deps:
       - submodules/yolov5/src/train.py
       - data/processed/lacmus/dataset.yaml
+    outs:
+      - lacmus

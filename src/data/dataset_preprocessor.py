@@ -10,12 +10,12 @@ from tqdm import tqdm
 def split_dataset(
     dataset_path: Path | str,
     output_dataset_path: Path | str,
-    ratio: tuple[float, float, float] = (0.7, 0.15, 0.15),
+    ratio: tuple[float, float] = (0.7, 0.3),
 ) -> None:
     if output_dataset_path.exists():
         rmtree(output_dataset_path)
     output_dataset_path.mkdir(parents=True)
-    for data_type, subset in product(["labels", "images"], ["train", "test", "val"]):
+    for data_type, subset in product(["labels", "images"], ["train", "val"]):
         (output_dataset_path / subset / data_type).mkdir(parents=True)
 
     annotation_path = dataset_path / "annotation" / "annotation" / "YOLO-format"
@@ -24,14 +24,11 @@ def split_dataset(
     total_files = len(annotations)
 
     train_split = int(ratio[0] * total_files)
-    test_split = int(ratio[1] * total_files)
-
     train_files = annotations[:train_split]
-    test_files = annotations[train_split : train_split + test_split]
-    val_files = annotations[train_split + test_split :]
+    val_files = annotations[train_split:]
     # Копирование файлов в соответствующие подвыборки
     for file_list, subset in zip(
-        [train_files, test_files, val_files], ["train", "test", "val"]
+        [train_files, val_files], ["train", "val"]
     ):
         for file in tqdm(file_list, desc=f"Copy {subset} files..."):
             image_path = (
