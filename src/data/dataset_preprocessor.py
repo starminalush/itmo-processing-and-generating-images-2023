@@ -61,6 +61,11 @@ def create_dataset_config(output_dataset_path: Path | str):
 @click.option("--dataset-path", type=click.Path(path_type=Path))
 @click.option("--output-dataset-path", type=click.Path(path_type=Path))
 def preprocess_dataset(dataset_path: Path | str, output_dataset_path: Path | str):
+    """Preprocess dataset for yolo training.
+    Args:
+        dataset_path: Dataset path.
+        output_dataset_path: Dataset path prepared for yolo.
+    """
     split_dataset(dataset_path=dataset_path, output_dataset_path=output_dataset_path)
     create_dataset_config(output_dataset_path)
 
