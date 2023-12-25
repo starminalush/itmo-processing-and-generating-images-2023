@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "itmo-processing-and-generating-images-2023"
+version = "0.1.0"
+description = ""
+authors = ["starminalush <izy@intersvyaz.net>"]
+readme = "README.md"
+packages = [{include = "itmo_processing_and_generating_images_2023"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pytorch-lightning = "^2.1.3"
+wandb = "^0.16.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+isort = "^5.13.2"
+flake8 = "^6.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
