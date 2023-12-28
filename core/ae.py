@@ -1,21 +1,22 @@
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning.utilities.types import OptimizerLRScheduler
 from torch import optim
-from torchmetrics import MetricCollection
-from torchmetrics.classification import BinaryRecall, BinarySpecificity
-
 from core.autoencoder_modules import Decoder, Encoder
 from core.loss import ReconstuctionLoss
+
+torch.manual_seed(42)
+pl.seed_everything(42)
 
 
 class AutoEncoder(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.encoder = Encoder(
-            num_input_channels=3, base_channel_size=32, latent_dim=32
+            num_input_channels=3, base_channel_size=32, latent_dim=128
         )
         self.decoder = Decoder(
-            num_input_channels=3, base_channel_size=32, latent_dim=32
+            num_input_channels=3, base_channel_size=32, latent_dim=128
         )
         self.mse_loss = ReconstuctionLoss()
 
@@ -27,14 +28,6 @@ class AutoEncoder(pl.LightningModule):
     def configure_optimizers(self) -> OptimizerLRScheduler:
         optimizer = optim.AdamW(self.parameters(), lr=1e-2)
         return optimizer
-        # scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        #     optimizer, mode="min", factor=0.2, patience=10, min_lr=5e-5
-        # )
-        # return {
-        #     "optimizer": optimizer,
-        #     "lr_scheduler": scheduler,
-        #     "monitor": "val_loss",
-        #}
 
     def _model_forward(self, x):
         x_hat = self.forward(x)

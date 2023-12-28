@@ -1,13 +1,14 @@
 from collections import defaultdict
+import pytorch_lightning as pl
 from pathlib import Path
 
 import torch
 from PIL import Image
-from torchvision.transforms import Resize, ToTensor
-from torchvision.transforms.v2 import Compose, Normalize, RandomCrop
-from threshold_selector import mse
+from torchvision.transforms import Resize, ToTensor, Normalize
+from torchvision.transforms.v2 import Compose, RandomCrop
 
 from core.ae import AutoEncoder
+from core.loss import ReconstuctionLoss
 
 
 def read_json_file(file_path):
@@ -41,9 +42,14 @@ transform = Compose(
         Resize(38),
         RandomCrop(size=(32, 32)),
         ToTensor(),
-        Normalize(mean=(0.4237, 0.5344, 0.4620), std=(0.0472, 0.0526, 0.0489)),
+        Normalize(mean=0, std=1),
     ]
 )
+
+
+loss = ReconstuctionLoss()
+torch.manual_seed(42)
+pl.seed_everything(42)
 
 model = AutoEncoder.load_from_checkpoint('models/model.ckpt')
 model.eval()
@@ -55,7 +61,7 @@ def classify_image(image_path, image_dataset_dir: Path):
         initial_image = transform(initial_image)
         initial_image = initial_image.unsqueeze(0)
         reconstruction_image = model(initial_image.to('cuda')).cpu()
-        return 1 if mse(initial_image, reconstruction_image) > 0.86 else 0 # +
+        return 1 if loss(initial_image, reconstruction_image) > 16 else 0 # +
 
 
 def test():

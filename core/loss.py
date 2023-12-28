@@ -8,4 +8,4 @@ class ReconstuctionLoss(nn.Module):
 
     def forward(self, x, x_hat):
         loss = F.mse_loss(x, x_hat, reduction="none")
-        return loss
+        return loss.sum(dim=[1,2,3]).mean(dim=[0])
