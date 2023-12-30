@@ -35,6 +35,8 @@ def train(
     num_epochs: int = 100,
     project_name: str = "defects",
 ) -> None:
+    """Train model for anomaly detection."""
+
     checkpoint_path = Path("models")
     checkpoint_path.mkdir(exist_ok=True, parents=True)
 

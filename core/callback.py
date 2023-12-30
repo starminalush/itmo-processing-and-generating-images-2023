@@ -8,8 +8,8 @@ import wandb
 class GenerateCallback(pl.Callback):
     def __init__(self, input_imgs, every_n_epochs=1):
         super().__init__()
-        self.input_imgs = input_imgs  # Images to reconstruct during training
-        self.every_n_epochs = every_n_epochs  # Only save those images every N epochs (otherwise tensorboard gets quite large)
+        self.input_imgs = input_imgs
+        self.every_n_epochs = every_n_epochs
 
     def on_train_epoch_end(self, trainer, pl_module):
         if trainer.current_epoch % self.every_n_epochs == 0:

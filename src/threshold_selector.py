@@ -19,18 +19,24 @@ pl.seed_everything(42)
 @click.option("--dataset-path", type=click.Path(path_type=Path))
 @click.option("--checkpoint-path", type=click.Path(path_type=Path))
 @click.option("--img-size", type=int)
-def threshold_selector(
+def select_threshold(
     dataset_path: Path | str, checkpoint_path: Path | str, img_size: int
-):
+) -> None:
+    """Select threshold by mse on proliv.
+    Args:
+        dataset_path: Dataset 'proliv' location.
+        checkpoint_path: Trained model checkpoint path.
+        img_size: Image size. Needed for transforms.
+    """
     model = AE.load_from_checkpoint(checkpoint_path)
     model.eval()
     mse_losses = list()
-    intermediate_dataset = DefectsDataset(
+    proliv_dataset = DefectsDataset(
         dataset_path, transform=get_test_transforms(img_size)
     )
-    intermediate_dataloader = DataLoader(intermediate_dataset, batch_size=1)
+    proliv_dataloader = DataLoader(proliv_dataset, batch_size=1)
     with torch.no_grad():
-        for image in intermediate_dataloader:
+        for image in proliv_dataloader:
             reconstacted_image = model(image.to("cuda"))
             mse_losses.append(F.mse_loss(image, reconstacted_image.cpu()).item())
 
@@ -42,4 +48,4 @@ def threshold_selector(
 
 
 if __name__ == "__main__":
-    threshold_selector()
+    select_threshold()

@@ -13,6 +13,12 @@ from tqdm import tqdm
 def split_dataset_on_subsets(
     dataset_path: Path | str, output_dataset_path: Path | str, ratio: float
 ) -> None:
+    """Split dataset on train and val subsets.
+    Args:
+        dataset_path: Initial dataset path.
+        output_dataset_path:  Dataset path after splitting.
+        ratio: Test subset ratio.
+    """
     if output_dataset_path.exists():
         rmtree(output_dataset_path)
     output_dataset_path.mkdir(parents=True)
