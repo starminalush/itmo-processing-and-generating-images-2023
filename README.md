@@ -39,15 +39,21 @@
 
 ## Лоссы
 ### Train
+![image](https://github.com/starminalush/itmo-processing-and-generating-images-2023/assets/103132748/7cff82f7-8398-499c-8568-adf1f64acf55)
+
 ### Validation
+![image](https://github.com/starminalush/itmo-processing-and-generating-images-2023/assets/103132748/d9e0ac7f-8753-4a80-8af6-82f0fefd5bf9)
+
 
 ## Подбор трешхолда для отсечки по классам
 Не стала обучать деревья, просто визуализировала лоссы и выбрала примерно тот, где визуально есть большой перелом по MSE
+![image](https://github.com/starminalush/itmo-processing-and-generating-images-2023/assets/103132748/7e9639b9-2021-47a5-a21c-0826b1808bae)
 
 ## Метрики
 | TPR | TNR|
 |---|---|
-|0.902|0.9102|
+|0.902|0.91|
 
+## Вывод
 Не совсем удалось побить бейзлайн. Перебирала архитектуры(пробовала VAE, добавляла и убавляла слои в текущем), меняла optimizer и количество эпох при обучении, но по итогу метрики +- растут только при очень точном подборе аугментаций.
 
