@@ -1,18 +1,30 @@
 stages:
-#  split_subsets:
-#    cmd: python src/data/dataset_splitter.py --dataset-path data/external/defects/train --output-dataset-path data/processed/defects/
-#    deps:
-#      - src/data/dataset_splitter.py
-#      - data/external/defects/train
-#    outs:
-#      - data/processed/defects
+  split_subsets:
+    cmd: python src/data/dataset_splitter.py --dataset-path data/external/defects/train --output-dataset-path data/processed/defects/
+    deps:
+      - src/data/dataset_splitter.py
+      - data/external/defects/train
+    outs:
+      - data/processed/defects
+
   train_model:
-    cmd: python src/train.py --dataset-path data/processed/defects --device cuda --batch-size 16 --img-size 32 --num-epochs 25
+    cmd: python src/train.py --dataset-path data/processed/defects --device cuda --batch-size 16 --img-size 32 --num-epochs 25 --project-name defects
     deps:
       - src/train.py
       - data/processed/defects
     outs:
       - models
 
-#  select_threshold:
-#    cmd: python src/threshold_selector.py
+  select_threshold:
+    cmd: python src/threshold_selector.py --dataset-path data/external/defects/proliv --img-size 32 --checkpoint-path models/model.ckpt
+    deps:
+      - src/threshold_selector.py
+      - data/external/defects/proliv
+    outs:
+      - reports/mse.png
+
+  test_model:
+    cmd: python src/test.py --dataset-path data/external/defects/test --img-size 32 --project-name defects --checkpoint-path models/model.ckpt
+    deps:
+      - src/threshold_selector.py
+      - data/external/defects/test

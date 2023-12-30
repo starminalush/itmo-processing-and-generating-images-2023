@@ -1,16 +1,21 @@
-from torchvision.transforms import Compose, Resize, RandomHorizontalFlip, ToTensor, Normalize, RandomRotation, \
-    RandomVerticalFlip, ColorJitter
+from torchvision.transforms import (CenterCrop, Compose, GaussianBlur,
+                                    Normalize, RandomErasing,
+                                    RandomHorizontalFlip, RandomRotation,
+                                    RandomVerticalFlip, Resize, ToTensor)
 
 
 def get_train_transforms(img_size: int) -> Compose:
     return Compose(
         [
-            Resize(size=(img_size, img_size)),
+            Resize(size=(img_size + 10, img_size + 10)),
+            CenterCrop((img_size, img_size)),
+            GaussianBlur(3),
             RandomHorizontalFlip(),
             RandomVerticalFlip(),
             RandomRotation(15),
             ToTensor(),
             Normalize(mean=0, std=1),
+            RandomErasing(p=0.1),
         ]
     )
 

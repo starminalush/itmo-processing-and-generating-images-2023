@@ -28,31 +28,28 @@ def _get_debug_images(num, dataset):
 @click.option("--num-epochs", type=int)
 @click.option("--project-name", type=str)
 def train(
-        dataset_path: Path | str,
-        device: str = "cuda",
-        batch_size: int = 256,
-        img_size: int = 32,
-        num_epochs: int = 100,
-        project_name: str = "defects",
+    dataset_path: Path | str,
+    device: str = "cuda",
+    batch_size: int = 256,
+    img_size: int = 32,
+    num_epochs: int = 100,
+    project_name: str = "defects",
 ) -> None:
     checkpoint_path = Path("models")
     checkpoint_path.mkdir(exist_ok=True, parents=True)
 
     model = AE()
-    wandb_logger = WandbLogger(
-        project=project_name
-    )
+    wandb_logger = WandbLogger(project=project_name)
     wandb_logger.watch(model)
 
     transform = get_train_transforms(img_size=img_size)
 
-    train_dataset = DefectsDataset(dataset_path / "train", transform=transform, labels=None)
+    train_dataset = DefectsDataset(
+        dataset_path / "train", transform=transform, labels=None
+    )
     val_dataset = DefectsDataset(dataset_path / "val", transform=transform, labels=None)
     train_loader = data.DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4
+        train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
     )
     val_loader = data.DataLoader(
         val_dataset,
@@ -74,7 +71,7 @@ def train(
                 filename="model",
                 save_weights_only=True,
                 monitor="val_loss",
-                mode='min'
+                mode="min",
             ),
             GenerateCallback(
                 _get_debug_images(8, dataset=val_dataset), every_n_epochs=4

@@ -1,8 +1,8 @@
 import pytorch_lightning as pl
-from pytorch_lightning.utilities.types import OptimizerLRScheduler
-from torch import optim
 import torch.nn as nn
 import torch.nn.functional as F
+from pytorch_lightning.utilities.types import OptimizerLRScheduler
+from torch import optim
 
 
 class AE(pl.LightningModule):
@@ -32,9 +32,8 @@ class AE(pl.LightningModule):
         x = self.decoder(x)
         return x
 
-
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        optimizer = optim.Adam(self.parameters(), lr=0.001, weight_decay=1e-5)
+        optimizer = optim.Adam(self.parameters(), lr=0.004, weight_decay=1e-5)
         return optimizer
 
     def _model_forward(self, x):
