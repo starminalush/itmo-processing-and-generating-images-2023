@@ -7,10 +7,13 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from torch.utils import data
 
-from core.ae import AutoEncoder
+from core.ae import AE
 from core.callback import GenerateCallback
-from core.dataset import DefectsDataset, collate_fn
+from core.dataset import DefectsDataset
 from core.transforms import get_train_transforms
+
+torch.manual_seed(42)
+pl.seed_everything(42)
 
 
 def _get_debug_images(num, dataset):
@@ -19,8 +22,7 @@ def _get_debug_images(num, dataset):
 
 @click.command()
 @click.option("--dataset-path", type=click.Path(path_type=Path))
-@click.option("--device", type=str, required=False, default='cuda')
-@click.option("--pretrained-filename", type=click.Path(path_type=Path), required=False)
+@click.option("--device", type=str, required=False, default="cuda")
 @click.option("--batch-size", type=int)
 @click.option("--img-size", type=int)
 @click.option("--num-epochs", type=int)
@@ -28,45 +30,35 @@ def _get_debug_images(num, dataset):
 def train(
         dataset_path: Path | str,
         device: str = "cuda",
-        pretrained_filename: Path | None = None,
         batch_size: int = 256,
         img_size: int = 32,
         num_epochs: int = 100,
-        project_name: str = 'defects'
+        project_name: str = "defects",
 ) -> None:
     checkpoint_path = Path("models")
     checkpoint_path.mkdir(exist_ok=True, parents=True)
 
-    if pretrained_filename is not None and pretrained_filename.is_file():
-        print("Found pretrained model, loading...")
-        model = AutoEncoder.load_from_checkpoint(pretrained_filename)
-    else:
-        model = AutoEncoder()
+    model = AE()
     wandb_logger = WandbLogger(
-        project=project_name, log_model="all", save_dir=project_name
+        project=project_name
     )
     wandb_logger.watch(model)
 
     transform = get_train_transforms(img_size=img_size)
 
-    train_dataset = DefectsDataset(dataset_path / "train", transform)
-    val_dataset = DefectsDataset(dataset_path / "val", transform)
+    train_dataset = DefectsDataset(dataset_path / "train", transform=transform, labels=None)
+    val_dataset = DefectsDataset(dataset_path / "val", transform=transform, labels=None)
     train_loader = data.DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        drop_last=True,
-        pin_memory=True,
-        num_workers=4,
-        collate_fn=collate_fn,
+        num_workers=4
     )
     val_loader = data.DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
-        drop_last=False,
         num_workers=4,
-        collate_fn=collate_fn,
     )
 
     trainer = pl.Trainer(
@@ -74,12 +66,18 @@ def train(
         accelerator="gpu" if str(device).startswith("cuda") else "cpu",
         devices=1,
         logger=wandb_logger,
-        log_every_n_steps=20,
+        log_every_n_steps=2,
         max_epochs=num_epochs,
         callbacks=[
-            ModelCheckpoint(dirpath='models', filename='model', save_weights_only=True, monitor='val_loss'),
+            ModelCheckpoint(
+                dirpath="models",
+                filename="model",
+                save_weights_only=True,
+                monitor="val_loss",
+                mode='min'
+            ),
             GenerateCallback(
-                _get_debug_images(8, dataset=val_dataset), every_n_epochs=10
+                _get_debug_images(8, dataset=val_dataset), every_n_epochs=4
             ),
             LearningRateMonitor("epoch"),
         ],
@@ -90,6 +88,7 @@ def train(
 
     trainer.fit(model, train_loader, val_loader)
     trainer.test(model, val_loader, verbose=False)
+
 
 if __name__ == "__main__":
     train()

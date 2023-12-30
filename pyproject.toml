@@ -10,6 +10,7 @@ packages = [{include = "itmo_processing_and_generating_images_2023"}]
 python = "^3.10"
 pytorch-lightning = "^2.1.3"
 wandb = "^0.16.1"
+scikit-learn = "^1.3.2"
 
 
 [tool.poetry.group.dev.dependencies]

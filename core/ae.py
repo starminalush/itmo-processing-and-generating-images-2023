@@ -1,38 +1,46 @@
 import pytorch_lightning as pl
-import torch
 from pytorch_lightning.utilities.types import OptimizerLRScheduler
 from torch import optim
-from core.autoencoder_modules import Decoder, Encoder
-from core.loss import ReconstuctionLoss
-
-torch.manual_seed(42)
-pl.seed_everything(42)
+import torch.nn as nn
+import torch.nn.functional as F
 
 
-class AutoEncoder(pl.LightningModule):
+class AE(pl.LightningModule):
     def __init__(self):
-        super().__init__()
-        self.encoder = Encoder(
-            num_input_channels=3, base_channel_size=32, latent_dim=128
+        super(AE, self).__init__()
+        # Encoder
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 16, 3, stride=2, padding=1),
+            nn.GELU(),
+            nn.Conv2d(16, 32, 3, stride=2, padding=1),
+            nn.GELU(),
+            nn.Conv2d(32, 64, 3, stride=2, padding=1),
+            nn.GELU(),
         )
-        self.decoder = Decoder(
-            num_input_channels=3, base_channel_size=32, latent_dim=128
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(64, 32, 3, stride=2, padding=1, output_padding=1),
+            nn.GELU(),
+            nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1),
+            nn.GELU(),
+            nn.ConvTranspose2d(16, 3, 3, stride=2, padding=1, output_padding=1),
+            nn.Sigmoid(),
         )
-        self.mse_loss = ReconstuctionLoss()
 
     def forward(self, x):
-        z = self.encoder(x)
-        x_hat = self.decoder(z)
-        return x_hat
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        optimizer = optim.AdamW(self.parameters(), lr=1e-2)
+        optimizer = optim.Adam(self.parameters(), lr=0.001, weight_decay=1e-5)
         return optimizer
 
     def _model_forward(self, x):
-        x_hat = self.forward(x)
-        loss = self.mse_loss(x, x_hat).mean()
-        return loss
+        reconstruction = self.forward(x)
+        mse_loss = F.mse_loss(reconstruction, x)
+        return mse_loss
 
     def training_step(self, x, batch_idx):
         loss = self._model_forward(x)

@@ -1,14 +1,14 @@
 from collections import defaultdict
-import pytorch_lightning as pl
 from pathlib import Path
 
+import pytorch_lightning as pl
 import torch
 from PIL import Image
-from torchvision.transforms import Resize, ToTensor, Normalize
-from torchvision.transforms.v2 import Compose, RandomCrop
-
-from core.ae import AutoEncoder
-from core.loss import ReconstuctionLoss
+from torch import nn
+import torch.nn.functional as F
+from core.ae import AE
+from core.transforms import get_test_transforms
+from sklearn.metrics import confusion_matrix
 
 
 def read_json_file(file_path):
@@ -23,7 +23,7 @@ def read_json_file(file_path):
     """
     data_dict = {}
 
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         for line in file:
             # Разделение строки на имя файла и значение
             file_name, value = line.strip().split()
@@ -37,55 +37,40 @@ def read_json_file(file_path):
     return data_dict
 
 
-transform = Compose(
-    [
-        Resize(38),
-        RandomCrop(size=(32, 32)),
-        ToTensor(),
-        Normalize(mean=0, std=1),
-    ]
-)
-
-
-loss = ReconstuctionLoss()
+loss = nn.MSELoss(reduction='none')
 torch.manual_seed(42)
 pl.seed_everything(42)
 
-model = AutoEncoder.load_from_checkpoint('models/model.ckpt')
+model = AE.load_from_checkpoint("models/model.ckpt")
 model.eval()
+
+transform = get_test_transforms(32)
 
 
 def classify_image(image_path, image_dataset_dir: Path):
-    with (torch.no_grad()):
-        initial_image = Image.open(image_dataset_dir / image_path)
+    with torch.no_grad():
+        initial_image = Image.open(image_dataset_dir / image_path).convert('RGB')
         initial_image = transform(initial_image)
         initial_image = initial_image.unsqueeze(0)
-        reconstruction_image = model(initial_image.to('cuda')).cpu()
-        return 1 if loss(initial_image, reconstruction_image) > 16 else 0 # +
+        reconstruction_image = model(initial_image.to("cuda"))
+        return 1 if F.mse_loss(initial_image, reconstruction_image.cpu()) >= 0.0005328908446244895 else 0  # +
 
 
 def test():
     test_results = defaultdict(dict)
-    dataset_image_dir = Path('data/external/defects/test/imgs')
-    with open('data/external/defects/test/test_annotation.txt') as file:
+    dataset_image_dir = Path("data/external/defects/test/imgs")
+    with open("data/external/defects/test/test_annotation.txt") as file:
         lines = file.readlines()
         for line in lines:
             image_path, label = line.strip().split()
             result = classify_image(image_path, dataset_image_dir)
-            test_results[image_path] = {'y_true': int(label), 'y_pred': int(result)}
-    fp, tp, fn, tn = 0, 0, 0, 0
-    for k, v in test_results.items():
-        if v['y_pred'] == 1 and v['y_true'] == 0:
-            fp += 1
-        elif v['y_pred'] == 1 and v['y_true'] == 1:
-            tp += 1
-        elif v['y_pred'] == 0 and v['y_true'] == 1:
-            fn += 1
-        else:
-            tn += 1
+            test_results[image_path] = {"y_true": int(label), "y_pred": int(result)}
+    gt = [v['y_true'] for k,v in test_results.items()]
+    predictions = [v['y_pred'] for k, v in test_results.items()]
+    tn, fp, fn, tp = confusion_matrix(gt, predictions).ravel()
     print(f"TNR: {1 * (tn / (fp + tn))}")
     print(f"TPR: { 1 * (tp / (tp + fn))}")
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     test()

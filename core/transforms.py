@@ -1,17 +1,25 @@
-import torch
-from torchvision import transforms
-from torchvision.transforms import v2
+from torchvision.transforms import Compose, Resize, RandomHorizontalFlip, ToTensor, Normalize, RandomRotation, \
+    RandomVerticalFlip, ColorJitter
 
 
-def get_train_transforms(img_size: int) -> transforms.Compose:
-    return transforms.Compose(
+def get_train_transforms(img_size: int) -> Compose:
+    return Compose(
         [
-            v2.Resize(38),
-            v2.RandomCrop(size=(img_size,img_size)),
-            v2.RandomRotation(5),
-            v2.RandomHorizontalFlip(),
-            v2.RandomVerticalFlip(),
-            v2.ToTensor(),
-            transforms.Normalize(mean=0, std=1),
+            Resize(size=(img_size, img_size)),
+            RandomHorizontalFlip(),
+            RandomVerticalFlip(),
+            RandomRotation(15),
+            ToTensor(),
+            Normalize(mean=0, std=1),
+        ]
+    )
+
+
+def get_test_transforms(img_size: int) -> Compose:
+    return Compose(
+        [
+            Resize(size=(img_size, img_size)),
+            ToTensor(),
+            Normalize(mean=0, std=1),
         ]
     )

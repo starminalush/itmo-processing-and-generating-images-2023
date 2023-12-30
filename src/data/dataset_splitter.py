@@ -9,8 +9,9 @@ from tqdm import tqdm
 @click.command()
 @click.option("--dataset-path", type=click.Path(path_type=Path))
 @click.option("--output-dataset-path", type=click.Path(path_type=Path))
+@click.option("--ratio", type=float, default=0.85)
 def split_dataset_on_subsets(
-    dataset_path: Path | str, output_dataset_path: Path | str, ratio: float = 0.7
+    dataset_path: Path | str, output_dataset_path: Path | str, ratio: float
 ) -> None:
     if output_dataset_path.exists():
         rmtree(output_dataset_path)
